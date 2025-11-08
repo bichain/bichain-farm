@@ -1,4 +1,9 @@
-<!DOCTYPE html>
+}
+    
+    ReactDOM.render(<FarmGame />, document.getElementById('root'));
+  </script>
+</body>
+</html><!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -11,7 +16,18 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
-    body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { 
+      margin: 0; 
+      padding: 0; 
+      font-family: system-ui, -apple-system, sans-serif; 
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
   </style>
 </head>
 <body>
@@ -20,6 +36,48 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
     const { Sprout, Droplets, Sun, Coins, Wallet, LogOut, Globe } = lucide;
+
+    // LocalStorage wrapper para substituir window.storage
+    const storage = {
+      get: (key) => {
+        try {
+          const value = localStorage.getItem(key);
+          return value ? { key, value, shared: false } : null;
+        } catch (e) {
+          return null;
+        }
+      },
+      set: (key, value) => {
+        try {
+          localStorage.setItem(key, value);
+          return { key, value, shared: false };
+        } catch (e) {
+          return null;
+        }
+      },
+      delete: (key) => {
+        try {
+          localStorage.removeItem(key);
+          return { key, deleted: true, shared: false };
+        } catch (e) {
+          return null;
+        }
+      },
+      list: (prefix) => {
+        try {
+          const keys = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!prefix || key.startsWith(prefix)) {
+              keys.push(key);
+            }
+          }
+          return { keys, prefix, shared: false };
+        } catch (e) {
+          return { keys: [], shared: false };
+        }
+      }
+    };
 
     function FarmGame() {
       const [account, setAccount] = useState(null);
@@ -133,7 +191,7 @@
 
       const loadProgress = async (address) => {
         try {
-          const result = await window.storage.get(`farm:${address.toLowerCase()}`);
+          const result = storage.get(`farm:${address.toLowerCase()}`);
           if (result) {
             const data = JSON.parse(result.value);
             setMoney(data.money);
@@ -159,7 +217,7 @@
         }
       };
 
-      const saveProgress = async () => {
+      const saveProgress = () => {
         if (!account) return;
         
         try {
@@ -172,7 +230,7 @@
             language,
             ensName
           };
-          await window.storage.set(`farm:${account.toLowerCase()}`, JSON.stringify(data));
+          storage.set(`farm:${account.toLowerCase()}`, JSON.stringify(data));
         } catch (e) {
           console.error('Error saving:', e);
         }
@@ -519,9 +577,3 @@
           </div>
         </div>
       );
-    }
-    
-    ReactDOM.render(<FarmGame />, document.getElementById('root'));
-  </script>
-</body>
-</html>
