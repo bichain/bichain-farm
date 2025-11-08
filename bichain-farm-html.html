@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Bichain Farm - A blockchain farming game on ApeChain with ENS support">
+  <title>Bichain Farm</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const { Sprout, Droplets, Sun, Coins, Wallet, LogOut, Globe } = lucide;
+
+    function FarmGame() {
+      const [account, setAccount] = useState(null);
+      const [ensName, setEnsName] = useState(null);
+      const [isConnecting, setIsConnecting] = useState(false);
+      const [money, setMoney] = useState(50);
+      const [plots, setPlots] = useState(Array(3).fill(null));
+      const [selectedSeed, setSelectedSeed] = useState(null);
+      const [error, setError] = useState('');
+      const [language, setLanguage] = useState('en');
+      const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+
+      const APECHAIN_CONFIG = {
+        chainId: '0x8173',
+        chainName: 'ApeChain',
+        nativeCurrency: {
+          name: 'APE',
+          symbol: 'APE',
+          decimals: 18
+        },
+        rpcUrls: ['https://apechain.calderachain.xyz/http'],
+        blockExplorerUrls: ['https://apechain.calderaexplorer.xyz']
+      };
+
+      const translations = {
+        en: {
+          title: 'Bichain Farm',
+          connectWallet: 'Connect MetaMask',
+          connecting: 'Connecting...',
+          disconnect: 'Disconnect',
+          network: 'Network',
+          autoConfig: 'Will be configured automatically',
+          progressSaved: 'Your progress will be saved automatically',
+          progressRestored: 'and restored when you come back!',
+          metamaskNotInstalled: 'MetaMask is not installed! Please install MetaMask to play.',
+          connectionError: 'Error connecting to MetaMask. Please try again.',
+          seedShop: 'Seeds Shop',
+          farmPlots: 'Farm Plots',
+          howToPlay: 'How to Play:',
+          step1: '1. Select seeds from the shop',
+          step2: '2. Click empty plots to plant',
+          step3: '3. Wait for crops to grow',
+          step4: '4. Click ready crops to harvest and earn money!',
+          autoSaved: '✓ Progress automatically saved',
+          empty: 'Empty',
+          ready: 'Ready!',
+          sells: 'Sells',
+          clickToPlant: 'Click on an empty plot to plant',
+          connectToPlay: 'Connect your MetaMask wallet to play',
+        },
+        pt: {
+          title: 'Bichain Farm',
+          connectWallet: 'Conectar MetaMask',
+          connecting: 'Conectando...',
+          disconnect: 'Desconectar',
+          network: 'Rede',
+          autoConfig: 'Será configurada automaticamente',
+          progressSaved: 'Seu progresso será salvo automaticamente',
+          progressRestored: 'e restaurado quando você voltar!',
+          metamaskNotInstalled: 'MetaMask não está instalado! Por favor, instale o MetaMask para jogar.',
+          connectionError: 'Erro ao conectar com MetaMask. Tente novamente.',
+          seedShop: 'Loja de Sementes',
+          farmPlots: 'Terrenos da Fazenda',
+          howToPlay: 'Como Jogar:',
+          step1: '1. Selecione sementes na loja',
+          step2: '2. Clique em terrenos vazios para plantar',
+          step3: '3. Aguarde as plantas crescerem',
+          step4: '4. Clique nas plantas prontas para colher e ganhar dinheiro!',
+          autoSaved: '✓ Progresso salvo automaticamente',
+          empty: 'Vazio',
+          ready: 'Pronto!',
+          sells: 'Vende',
+          clickToPlant: 'Clique em um terreno vazio para plantar',
+          connectToPlay: 'Conecte sua carteira MetaMask para jogar',
+        },
+        es: {
+          title: 'Bichain Farm',
+          connectWallet: 'Conectar MetaMask',
+          connecting: 'Conectando...',
+          disconnect: 'Desconectar',
+          network: 'Red',
+          autoConfig: 'Se configurará automáticamente',
+          progressSaved: 'Tu progreso se guardará automáticamente',
+          progressRestored: '¡y se restaurará cuando vuelvas!',
+          metamaskNotInstalled: '¡MetaMask no está instalado! Por favor, instala MetaMask para jugar.',
+          connectionError: 'Error al conectar con MetaMask. Por favor, inténtalo de nuevo.',
+          seedShop: 'Tienda de Semillas',
+          farmPlots: 'Parcelas de Granja',
+          howToPlay: 'Cómo Jugar:',
+          step1: '1. Selecciona semillas de la tienda',
+          step2: '2. Haz clic en parcelas vacías para plantar',
+          step3: '3. Espera a que crezcan los cultivos',
+          step4: '4. ¡Haz clic en los cultivos listos para cosechar y ganar dinero!',
+          autoSaved: '✓ Progreso guardado automáticamente',
+          empty: 'Vacío',
+          ready: '¡Listo!',
+          sells: 'Vende',
+          clickToPlant: 'Haz clic en una parcela vacía para plantar',
+          connectToPlay: 'Conecta tu billetera MetaMask para jugar',
+        }
+      };
+
+      const t = translations[language];
+
+      const crops = {
+        wheat: { name: 'Wheat', cost: 10, sellPrice: 12, growTime: 300, icon: '🌾' },
+        carrot: { name: 'Carrot', cost: 15, sellPrice: 18, growTime: 600, icon: '🥕' },
+        corn: { name: 'Corn', cost: 20, sellPrice: 24, growTime: 1200, icon: '🌽' },
+        tomato: { name: 'Tomato', cost: 25, sellPrice: 30, growTime: 1800, icon: '🍅' },
+      };
+
+      const loadProgress = async (address) => {
+        try {
+          const result = await window.storage.get(`farm:${address.toLowerCase()}`);
+          if (result) {
+            const data = JSON.parse(result.value);
+            setMoney(data.money);
+            setPlots(data.plots);
+            if (data.language) {
+              setLanguage(data.language);
+            }
+          }
+        } catch (e) {
+          console.log('New player, starting fresh');
+        }
+      };
+
+      const resolveENS = async (address) => {
+        try {
+          const response = await fetch(`https://api.ensideas.com/ens/resolve/${address}`);
+          const data = await response.json();
+          if (data.name) {
+            setEnsName(data.name);
+          }
+        } catch (e) {
+          console.log('No ENS name found');
+        }
+      };
+
+      const saveProgress = async () => {
+        if (!account) return;
+        
+        try {
+          const data = {
+            money,
+            plots: plots.map(plot => plot ? {
+              ...plot,
+              lastSaved: Date.now()
+            } : null),
+            language,
+            ensName
+          };
+          await window.storage.set(`farm:${account.toLowerCase()}`, JSON.stringify(data));
+        } catch (e) {
+          console.error('Error saving:', e);
+        }
+      };
+
+      useEffect(() => {
+        if (account) {
+          saveProgress();
+        }
+      }, [money, plots, account, language]);
+
+      const connectWallet = async () => {
+        if (!window.ethereum) {
+          setError(t.metamaskNotInstalled);
+          return;
+        }
+
+        setIsConnecting(true);
+        setError('');
+
+        try {
+          const accounts = await window.ethereum.request({
+            method: 'eth_requestAccounts'
+          });
+
+          const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+
+          if (chainId !== APECHAIN_CONFIG.chainId) {
+            try {
+              await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: APECHAIN_CONFIG.chainId }],
+              });
+            } catch (switchError) {
+              if (switchError.code === 4902) {
+                await window.ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [APECHAIN_CONFIG],
+                });
+              } else {
+                throw switchError;
+              }
+            }
+          }
+
+          const address = accounts[0];
+          setAccount(address);
+          await resolveENS(address);
+          await loadProgress(address);
+
+        } catch (err) {
+          console.error('Connection error:', err);
+          setError(t.connectionError);
+        } finally {
+          setIsConnecting(false);
+        }
+      };
+
+      const disconnectWallet = () => {
+        setAccount(null);
+        setEnsName(null);
+        setMoney(50);
+        setPlots(Array(3).fill(null));
+        setSelectedSeed(null);
+      };
+
+      useEffect(() => {
+        if (window.ethereum) {
+          window.ethereum.on('accountsChanged', (accounts) => {
+            if (accounts.length === 0) {
+              disconnectWallet();
+            } else {
+              const address = accounts[0];
+              setAccount(address);
+              resolveENS(address);
+              loadProgress(address);
+            }
+          });
+
+          window.ethereum.on('chainChanged', () => {
+            window.location.reload();
+          });
+        }
+      }, []);
+
+      useEffect(() => {
+        if (!account) return;
+
+        const interval = setInterval(() => {
+          setPlots(prevPlots => 
+            prevPlots.map(plot => {
+              if (plot && plot.growth < plot.maxGrowth) {
+                return { ...plot, growth: plot.growth + 1 };
+              }
+              return plot;
+            })
+          );
+        }, 1000);
+
+        return () => clearInterval(interval);
+      }, [account]);
+
+      const plantSeed = (index) => {
+        if (selectedSeed && !plots[index] && money >= crops[selectedSeed].cost) {
+          setMoney(money - crops[selectedSeed].cost);
+          const newPlots = [...plots];
+          newPlots[index] = {
+            type: selectedSeed,
+            growth: 0,
+            maxGrowth: crops[selectedSeed].growTime
+          };
+          setPlots(newPlots);
+          setSelectedSeed(null);
+        }
+      };
+
+      const harvestCrop = (index) => {
+        const plot = plots[index];
+        if (plot && plot.growth >= plot.maxGrowth) {
+          setMoney(money + crops[plot.type].sellPrice);
+          const newPlots = [...plots];
+          newPlots[index] = null;
+          setPlots(newPlots);
+        }
+      };
+
+      const getPlotContent = (plot) => {
+        if (!plot) return null;
+        
+        const crop = crops[plot.type];
+        const growthPercent = (plot.growth / plot.maxGrowth) * 100;
+        const isReady = plot.growth >= plot.maxGrowth;
+
+        return (
+          <div className="flex flex-col items-center justify-center h-full">
+            <div className="text-4xl mb-1">{crop.icon}</div>
+            {!isReady && (
+              <div className="w-full bg-gray-300 h-2 rounded-full overflow-hidden">
+                <div 
+                  className="bg-green-500 h-full transition-all duration-1000"
+                  style={{ width: `${growthPercent}%` }}
+                />
+              </div>
+            )}
+            {isReady && (
+              <div className="text-xs font-bold text-green-600 animate-pulse">
+                {t.ready}
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      const LanguageSelector = () => (
+        <div className="relative">
+          <button
+            onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+            className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg hover:bg-gray-50 transition-all shadow"
+          >
+            <Globe className="w-4 h-4" />
+            <span className="text-sm font-semibold uppercase">{language}</span>
+          </button>
+          {showLanguageMenu && (
+            <div className="absolute top-full mt-2 right-0 bg-white rounded-lg shadow-lg overflow-hidden z-10">
+              <button
+                onClick={() => { setLanguage('en'); setShowLanguageMenu(false); }}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+              >
+                🇺🇸 English
+              </button>
+              <button
+                onClick={() => { setLanguage('pt'); setShowLanguageMenu(false); }}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+              >
+                🇧🇷 Português
+              </button>
+              <button
+                onClick={() => { setLanguage('es'); setShowLanguageMenu(false); }}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+              >
+                🇪🇸 Español
+              </button>
+            </div>
+          )}
+        </div>
+      );
+
+      if (!account) {
+        return (
+          <div className="min-h-screen bg-gradient-to-b from-sky-300 to-green-200 flex items-center justify-center p-4">
+            <div className="absolute top-4 right-4">
+              <LanguageSelector />
+            </div>
+            <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
+              <div className="text-center">
+                <h1 className="text-4xl font-bold mb-6 text-green-800">
+                  {t.title}
+                </h1>
+                <p className="text-gray-600 mb-8">
+                  {t.connectToPlay}
+                </p>
+                
+                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-gray-700 mb-2">
+                    <span className="font-semibold">{t.network}:</span> ApeChain
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {t.autoConfig}
+                  </p>
+                </div>
+
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{error}</p>
+                  </div>
+                )}
+
+                <button
+                  onClick={connectWallet}
+                  disabled={isConnecting}
+                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-4 px-6 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Wallet className="w-5 h-5" />
+                  {isConnecting ? t.connecting : t.connectWallet}
+                </button>
+
+                <div className="mt-6 text-xs text-gray-500">
+                  <p>{t.progressSaved}</p>
+                  <p>{t.progressRestored}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-sky-300 to-green-200 p-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h1 className="text-4xl font-bold text-green-800">
+                {t.title}
+              </h1>
+              <div className="flex gap-2">
+                <LanguageSelector />
+                <button
+                  onClick={disconnectWallet}
+                  className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all"
+                >
+                  <LogOut className="w-4 h-4" />
+                  {t.disconnect}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-lg p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-2xl font-bold text-yellow-600">
+                  <Coins className="w-8 h-8" />
+                  <span>${money}</span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {ensName ? (
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="font-bold text-green-600 flex items-center gap-1">
+                        🌐 {ensName}
+                      </span>
+                      <span className="font-mono text-xs text-gray-400">
+                        {account.slice(0, 6)}...{account.slice(-4)}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="font-mono">
+                      {account.slice(0, 6)}...{account.slice(-4)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+              <h2 className="text-xl font-bold mb-4 text-green-800">🌱 {t.seedShop}</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {Object.entries(crops).map(([key, crop]) => (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedSeed(key)}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      selectedSeed === key
+                        ? 'border-green-600 bg-green-50 scale-105'
+                        : 'border-gray-300 hover:border-green-400'
+                    } ${money < crop.cost ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={money < crop.cost}
+                  >
+                    <div className="text-3xl mb-1">{crop.icon}</div>
+                    <div className="text-sm font-semibold">{crop.name}</div>
+                    <div className="text-xs text-gray-600">${crop.cost}</div>
+                    <div className="text-xs text-green-600">{t.sells}: ${crop.sellPrice}</div>
+                    <div className="text-xs text-gray-500">{Math.floor(crop.growTime / 60)}min</div>
+                  </button>
+                ))}
+              </div>
+              {selectedSeed && (
+                <div className="mt-4 p-3 bg-green-50 rounded-lg text-center text-sm">
+                  {t.clickToPlant} {crops[selectedSeed].name}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-bold mb-4 text-green-800">🌾 {t.farmPlots}</h2>
+              <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+                {plots.map((plot, index) => (
+                  <button
+                    key={index}
+                    onClick={() => plot ? harvestCrop(index) : plantSeed(index)}
+                    className={`aspect-square rounded-lg border-4 transition-all ${
+                      plot
+                        ? plot.growth >= plot.maxGrowth
+                          ? 'border-yellow-400 bg-yellow-50 hover:bg-yellow-100 cursor-pointer'
+                          : 'border-green-400 bg-green-50 cursor-default'
+                        : selectedSeed
+                          ? 'border-dashed border-green-300 bg-amber-50 hover:bg-amber-100 cursor-pointer'
+                          : 'border-dashed border-gray-300 bg-gray-50 cursor-default'
+                    }`}
+                  >
+                    {getPlotContent(plot)}
+                    {!plot && !selectedSeed && (
+                      <div className="text-gray-400 text-sm">{t.empty}</div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-6 text-center text-sm text-gray-700 bg-white rounded-lg p-4 shadow">
+              <p className="font-semibold mb-2">{t.howToPlay}</p>
+              <p>{t.step1}</p>
+              <p>{t.step2}</p>
+              <p>{t.step3}</p>
+              <p>{t.step4}</p>
+              <p className="mt-2 text-green-600 font-semibold">{t.autoSaved}</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    ReactDOM.render(<FarmGame />, document.getElementById('root'));
+  </script>
+</body>
+</html>
