@@ -45,6 +45,7 @@
       const [error, setError] = useState('');
       const [language, setLanguage] = useState('en');
       const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+      const [lastSaved, setLastSaved] = useState(null);
 
       const APECHAIN_CONFIG = {
         chainId: '0x8173',
@@ -94,14 +95,20 @@
 
       const loadProgress = async (address) => {
         try {
-          const result = storage.get(`farm:${address.toLowerCase()}`);
-          if (result) {
+          const key = `farm:${address.toLowerCase()}`;
+          const result = storage.get(key);
+          if (result && result.value) {
             const data = JSON.parse(result.value);
-            setMoney(data.money);
-            setPlots(data.plots);
+            console.log('✅ Progresso carregado:', data);
+            setMoney(data.money || 50);
+            setPlots(data.plots || Array(3).fill(null));
             if (data.language) setLanguage(data.language);
+          } else {
+            console.log('🆕 Novo jogador - começando do zero');
           }
-        } catch (e) { console.log('New player'); }
+        } catch (e) { 
+          console.error('❌ Erro ao carregar:', e);
+        }
       };
 
       const resolveENS = async (address) => {
@@ -115,12 +122,36 @@
       const saveProgress = () => {
         if (!account) return;
         try {
-          const data = { money, plots: plots.map(plot => plot ? { ...plot, lastSaved: Date.now() } : null), language, ensName };
-          storage.set(`farm:${account.toLowerCase()}`, JSON.stringify(data));
-        } catch (e) { console.error('Error saving:', e); }
+          const key = `farm:${account.toLowerCase()}`;
+          const data = { 
+            money, 
+            plots: plots.map(plot => plot ? { 
+              type: plot.type,
+              growth: plot.growth,
+              maxGrowth: plot.maxGrowth,
+              lastSaved: Date.now() 
+            } : null), 
+            language, 
+            ensName,
+            lastUpdate: Date.now()
+          };
+          const result = storage.set(key, JSON.stringify(data));
+          if (result) {
+            console.log('💾 Progresso salvo:', data);
+          } else {
+            console.error('❌ Falha ao salvar');
+          }
+        } catch (e) { 
+          console.error('❌ Erro ao salvar:', e); 
+        }
       };
 
-      useEffect(() => { if (account) saveProgress(); }, [money, plots, account, language]);
+      useEffect(() => { 
+        if (account) {
+          console.log('🔄 Salvando progresso automaticamente...');
+          saveProgress(); 
+        }
+      }, [money, plots, language]);
 
       const connectWallet = async () => {
         if (!window.ethereum) { setError(t.metamaskNotInstalled); return; }
