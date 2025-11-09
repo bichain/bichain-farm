@@ -9,7 +9,6 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
     body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
@@ -20,7 +19,6 @@
   <div id="root"></div>
   <script type="text/babel">
     const { useState, useEffect } = React;
-    const { Coins, Wallet, LogOut, Globe } = lucide;
 
     const storage = {
       get: (key) => {
@@ -213,26 +211,24 @@
         );
       };
 
-      const LanguageSelector = () => (
-        <div className="relative">
-          <button onClick={() => setShowLanguageMenu(!showLanguageMenu)} className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg hover:bg-gray-50 transition-all shadow">
-            <Globe className="w-4 h-4" />
-            <span className="text-sm font-semibold uppercase">{language}</span>
-          </button>
-          {showLanguageMenu && (
-            <div className="absolute top-full mt-2 right-0 bg-white rounded-lg shadow-lg overflow-hidden z-10">
-              <button onClick={() => { setLanguage('en'); setShowLanguageMenu(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">🇺🇸 English</button>
-              <button onClick={() => { setLanguage('pt'); setShowLanguageMenu(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">🇧🇷 Português</button>
-              <button onClick={() => { setLanguage('es'); setShowLanguageMenu(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">🇪🇸 Español</button>
-            </div>
-          )}
-        </div>
-      );
-
       if (!account) {
         return (
           <div className="min-h-screen bg-gradient-to-b from-sky-300 to-green-200 flex items-center justify-center p-4">
-            <div className="absolute top-4 right-4"><LanguageSelector /></div>
+            <div className="absolute top-4 right-4">
+              <div className="relative">
+                <button onClick={() => setShowLanguageMenu(!showLanguageMenu)} className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg hover:bg-gray-50 transition-all shadow">
+                  <span className="text-lg">🌐</span>
+                  <span className="text-sm font-semibold uppercase">{language}</span>
+                </button>
+                {showLanguageMenu && (
+                  <div className="absolute top-full mt-2 right-0 bg-white rounded-lg shadow-lg overflow-hidden z-10">
+                    <button onClick={() => { setLanguage('en'); setShowLanguageMenu(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">🇺🇸 English</button>
+                    <button onClick={() => { setLanguage('pt'); setShowLanguageMenu(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">🇧🇷 Português</button>
+                    <button onClick={() => { setLanguage('es'); setShowLanguageMenu(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">🇪🇸 Español</button>
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
               <div className="text-center">
                 <h1 className="text-4xl font-bold mb-6 text-green-800">{t.title}</h1>
@@ -243,7 +239,7 @@
                 </div>
                 {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"><p className="text-sm text-red-600">{error}</p></div>}
                 <button onClick={connectWallet} disabled={isConnecting} className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-4 px-6 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                  <Wallet className="w-5 h-5" />
+                  <span className="text-xl">👛</span>
                   {isConnecting ? t.connecting : t.connectWallet}
                 </button>
                 <div className="mt-6 text-xs text-gray-500"><p>{t.progressSaved}</p><p>{t.progressRestored}</p></div>
@@ -254,22 +250,34 @@
       }
 
       return (
-        <div className="min-h-screen bg-gradient-to-b from-sky-300 to-green-200 p-8">
+        <div className="min-h-screen bg-gradient-to-b from-sky-300 to-green-200 p-4 md:p-8">
           <div className="max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-4">
-              <h1 className="text-4xl font-bold text-green-800">{t.title}</h1>
+              <h1 className="text-2xl md:text-4xl font-bold text-green-800">{t.title}</h1>
               <div className="flex gap-2">
-                <LanguageSelector />
+                <div className="relative">
+                  <button onClick={() => setShowLanguageMenu(!showLanguageMenu)} className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg hover:bg-gray-50 transition-all shadow">
+                    <span className="text-lg">🌐</span>
+                    <span className="text-sm font-semibold uppercase">{language}</span>
+                  </button>
+                  {showLanguageMenu && (
+                    <div className="absolute top-full mt-2 right-0 bg-white rounded-lg shadow-lg overflow-hidden z-10">
+                      <button onClick={() => { setLanguage('en'); setShowLanguageMenu(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">🇺🇸 English</button>
+                      <button onClick={() => { setLanguage('pt'); setShowLanguageMenu(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">🇧🇷 Português</button>
+                      <button onClick={() => { setLanguage('es'); setShowLanguageMenu(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm">🇪🇸 Español</button>
+                    </div>
+                  )}
+                </div>
                 <button onClick={disconnectWallet} className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all">
-                  <LogOut className="w-4 h-4" />
-                  {t.disconnect}
+                  <span className="text-lg">🚪</span>
+                  <span className="hidden md:inline">{t.disconnect}</span>
                 </button>
               </div>
             </div>
             <div className="bg-white rounded-lg shadow-lg p-4 mb-6">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-2xl font-bold text-yellow-600">
-                  <Coins className="w-8 h-8" />
+                <div className="flex items-center gap-2 text-xl md:text-2xl font-bold text-yellow-600">
+                  <span className="text-2xl">💰</span>
                   <span>${money}</span>
                 </div>
                 <div className="text-sm text-gray-600">
@@ -278,37 +286,37 @@
                       <span className="font-bold text-green-600 flex items-center gap-1">🌐 {ensName}</span>
                       <span className="font-mono text-xs text-gray-400">{account.slice(0, 6)}...{account.slice(-4)}</span>
                     </div>
-                  ) : <span className="font-mono">{account.slice(0, 6)}...{account.slice(-4)}</span>}
+                  ) : <span className="font-mono text-xs md:text-sm">{account.slice(0, 6)}...{account.slice(-4)}</span>}
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-              <h2 className="text-xl font-bold mb-4 text-green-800">🌱 {t.seedShop}</h2>
+            <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-6">
+              <h2 className="text-lg md:text-xl font-bold mb-4 text-green-800">🌱 {t.seedShop}</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {Object.entries(crops).map(([key, crop]) => (
-                  <button key={key} onClick={() => setSelectedSeed(key)} className={`p-4 rounded-lg border-2 transition-all ${selectedSeed === key ? 'border-green-600 bg-green-50 scale-105' : 'border-gray-300 hover:border-green-400'} ${money < crop.cost ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={money < crop.cost}>
-                    <div className="text-3xl mb-1">{crop.icon}</div>
-                    <div className="text-sm font-semibold">{crop.name}</div>
+                  <button key={key} onClick={() => setSelectedSeed(key)} className={`p-3 md:p-4 rounded-lg border-2 transition-all ${selectedSeed === key ? 'border-green-600 bg-green-50 scale-105' : 'border-gray-300 hover:border-green-400'} ${money < crop.cost ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={money < crop.cost}>
+                    <div className="text-2xl md:text-3xl mb-1">{crop.icon}</div>
+                    <div className="text-xs md:text-sm font-semibold">{crop.name}</div>
                     <div className="text-xs text-gray-600">${crop.cost}</div>
                     <div className="text-xs text-green-600">{t.sells}: ${crop.sellPrice}</div>
                     <div className="text-xs text-gray-500">{Math.floor(crop.growTime / 60)}min</div>
                   </button>
                 ))}
               </div>
-              {selectedSeed && <div className="mt-4 p-3 bg-green-50 rounded-lg text-center text-sm">{t.clickToPlant} {crops[selectedSeed].name}</div>}
+              {selectedSeed && <div className="mt-4 p-3 bg-green-50 rounded-lg text-center text-xs md:text-sm">{t.clickToPlant} {crops[selectedSeed].name}</div>}
             </div>
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold mb-4 text-green-800">🌾 {t.farmPlots}</h2>
-              <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+            <div className="bg-white rounded-lg shadow-lg p-4 md:p-6">
+              <h2 className="text-lg md:text-xl font-bold mb-4 text-green-800">🌾 {t.farmPlots}</h2>
+              <div className="grid grid-cols-3 gap-3 md:gap-4 max-w-md mx-auto">
                 {plots.map((plot, index) => (
                   <button key={index} onClick={() => plot ? harvestCrop(index) : plantSeed(index)} className={`aspect-square rounded-lg border-4 transition-all ${plot ? plot.growth >= plot.maxGrowth ? 'border-yellow-400 bg-yellow-50 hover:bg-yellow-100 cursor-pointer' : 'border-green-400 bg-green-50 cursor-default' : selectedSeed ? 'border-dashed border-green-300 bg-amber-50 hover:bg-amber-100 cursor-pointer' : 'border-dashed border-gray-300 bg-gray-50 cursor-default'}`}>
                     {getPlotContent(plot)}
-                    {!plot && !selectedSeed && <div className="text-gray-400 text-sm">{t.empty}</div>}
+                    {!plot && !selectedSeed && <div className="text-gray-400 text-xs md:text-sm">{t.empty}</div>}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="mt-6 text-center text-sm text-gray-700 bg-white rounded-lg p-4 shadow">
+            <div className="mt-6 text-center text-xs md:text-sm text-gray-700 bg-white rounded-lg p-4 shadow">
               <p className="font-semibold mb-2">{t.howToPlay}</p>
               <p>{t.step1}</p>
               <p>{t.step2}</p>
@@ -321,7 +329,7 @@
       );
     }
 
-    ReactDOM.render(<FarmGame />, document.getElementById('root'));
+    ReactDOM.render(React.createElement(FarmGame), document.getElementById('root'));
   </script>
 </body>
 </html>
