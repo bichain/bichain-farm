@@ -1,1 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Bichain Farm - A blockchain farming game on ApeChain with ENS support">
+  <title>Bichain Farm</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    body { 
+      margin: 0; 
+      padding: 0; 
+      font-family: system-ui, -apple-system, sans-serif; 
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const { Sprout, Droplets, Sun, Coins, Wallet, LogOut, Globe } = lucide;
 
+    // LocalStorage wrapper para substituir window.storage
+    const storage = {
+      get: (key) => {
+        try {
+          const value = localStorage.getItem(key);
+          return value ? { key, value, shared: false } : null;
+        } catch (e) {
+          return null;
+        }
+      },
+      set: (key, value) => {
+        try {
+          localStorage.setItem(key, value);
+          return { key, value, shared: false };
+        } catch (e) {
+          return null;
+        }
+      },
+      delete: (key) => {
+        try {
+          localStorage.removeItem(key);
+          return { key, deleted: true, shared: false };
+        } catch (e) {
+          return null;
+        }
+      },
+      list: (prefix) => {
+        try {
+          const keys = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!prefix || key.startsWith(prefix)) {
+              keys.push(key);
+            }
+          }
+          return { keys, prefix, shared: false };
+        } catch (e) {
+          return { keys: [], shared: false };
+        }
+      }
+    };
+
+    function FarmGame() {
+      const [account, setAccount] = useState(null);
+      const [ensName, setEnsName] = useState(null);
+      const [isConnecting, setIsConnecting] = useState(false);
+      const [money, setMoney] = useState(50);
+      const [plots, setPlots] = useState(Array(3).fill(null));
+      const [selectedSeed, setSelectedSeed] = useState(null);
+      const [error, setError] = useState('');
+      const [language, setLanguage] = useState('en');
+      const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+
+      const APECHAIN_CONFIG = {
+        chainId: '0x8173',
+        chainName: 'ApeChain',
+        nativeCurrency: {
+          name: 'APE',
+          symbol: 'APE',
+          decimals: 18
+        },
+        rpcUrls: ['https://apechain.calderachain.xyz/http'],
+        blockExplorerUrls: ['https://apechain.calderaexplorer.xyz']
+      };
+
+      const translations = {
+        en: {
+          title: 'Bichain Farm',
